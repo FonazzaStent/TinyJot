@@ -57,6 +57,7 @@ def create_menu():
     sub_menu=tk.Menu(top, tearoff=0)
     edit_menu=tk.Menu(top,tearoff=0)
     menubar.add_cascade(menu=sub_menu,compound="left", label="File")
+    sub_menu.add_command(compound="left",label="New", command=new_file)
     sub_menu.add_command(compound="left",label="Open", command=open_file)
     sub_menu.add_command(compound="left",label="Save", command=Save)
     sub_menu.add_command(compound="left",label="Save As", command=Save_to_file)
@@ -80,10 +81,11 @@ def paste_code():
 
 #CopyContextMenu
 def create_context_menu():
-        global menu
-        menu = Menu(root, tearoff = 0)
-        menu.add_command(label="Copy", command=copy_text)
-        root.bind("<Button-3>", context_menu)
+    global menu
+    menu = Menu(root, tearoff = 0)
+    menu.add_command(label="Copy", command=copy_text)
+    menu.add_command(label="Paste", command=paste_text)
+    root.bind("<Button-3>", context_menu)
 
 def context_menu(event): 
     try: 
@@ -93,6 +95,17 @@ def context_menu(event):
         
 def copy_text():
         textbox.event_generate(("<<Copy>>"))
+
+def paste_text():
+        textbox.event_generate(("<<Paste>>"))
+
+#New file
+def new_file():
+    global txtfilename
+    txtfilename=''
+    textbox.delete(1.0,END)
+    top.title("TinyJot")
+
 
 #Open file
 def open_file():
@@ -113,11 +126,11 @@ def Save():
     global txtfilename
     text=textbox.get(1.0,END)
     if str(txtfilename)!='':
-          txtfilesave=open(txtfilename,'w')
-          txtfilesave.write(text)
-          txtfilesave.close()
-    filename=os.path.basename(txtfilename).split('/')[-1]
-    top.title("TinyJot - "+filename)
+        txtfilesave=open(txtfilename,'w')
+        txtfilesave.write(text)
+        txtfilesave.close()
+        filename=os.path.basename(txtfilename).split('/')[-1]
+        top.title("TinyJot - "+filename)
 
 
 #Save as
@@ -145,7 +158,6 @@ def main():
         create_textbox()
         create_menu()
         create_context_menu()
-        #list_folder_size()
         
 main()
 root.mainloop()

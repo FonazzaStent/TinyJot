@@ -9,7 +9,7 @@ For local files:
 - File – Save, to save a file currently being edited
 - File – Save As, to save a file with a new name
 - File – Quit, to quit the program
-- Edit -Copy, to copy text
+- Edit - Copy, to copy text
 - Edit – Paste, to paste text
 
 For remote FTP logfiles:

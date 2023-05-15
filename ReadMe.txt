@@ -4,13 +4,13 @@ open, edit and save a text logfile on a remote FTP server.
 
 For local files:
 
-- File – Open, to open a text file
-- File – New, to start a new text file
-- File – Save, to save a file currently being edited
-- File – Save As, to save a file with a new name
-- File – Quit, to quit the program
+- File â€“ Open, to open a text file
+- File â€“ New, to start a new text file
+- File â€“ Save, to save a file currently being edited
+- File â€“ Save As, to save a file with a new name
+- File â€“ Quit, to quit the program
 - Edit -Copy, to copy text
-- Edit – Paste. to paste text
+- Edit â€“ Paste, to paste text
 
 For remote FTP logfiles:
 
@@ -22,8 +22,8 @@ Edit the config.txt file with the FTP server parameters according to the followi
 
 Start the program. A window will appear and prompt you for a password. Input here the FTP user password.
 
-- FTP – Open, to open the remote logfile specified in the config.txt file (if it exists)
-- FTP – Save, to save editing window content to the remote logfile specified in the config.txt file
+- FTP â€“ Open, to open the remote logfile specified in the config.txt file (if it exists)
+- FTP â€“ Save, to save editing window content to the remote logfile specified in the config.txt file
 
 Every time you open a remote file, a timestamp will be automatically added at the end of the text contained
 in the editing window. You can start writing your next log entry below the timestamp.

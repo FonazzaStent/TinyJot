@@ -25,7 +25,7 @@ Start the program. A window will appear and prompt you for a password. Input her
 
 - File - FTP Open (Alt-T), to open the remote logfile specified in the config.txt file (if it exists)
 - File – FTP Save (Alt-V), to save editing window content to the remote logfile specified in the config.txt file
-- File - FTP Password (Alt-W), to input FTP user password 
+- File - FTP Password (Alt-P), to input FTP user password 
 
 Every time you open a remote file, a timestamp will be automatically added at the end of the text contained
 in the editing window. You can start writing your next log entry below the timestamp.

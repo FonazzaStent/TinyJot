@@ -1,0 +1,5 @@
+ftp.host.com
+21
+name@email.com
+log.txt
+/

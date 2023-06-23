@@ -437,8 +437,7 @@ def browse():
         #browsewin.protocol("WM_DELETE_WINDOW", QuitFTP)
         browsedir()
     else:
-        FTPerror=False
-        browse()
+        messagebox.showerror("FTP error", "Could not connect to FTP server.")
 
 
     

@@ -1,4 +1,4 @@
-TinyJot 1.1.7
+TinyJot 1.1.8
 
 TinyJot is a basic notepad with FTP capabilities. It can open, edit and
 save text files on a local drive, or open, edit and save a text logfile
@@ -6,13 +6,13 @@ on a remote FTP server.
 
 For local files:
 
-- File – Open (Alt-O), to open a text file
-- File – New (Alt-N), to start a new text file
-- File – Save (Alt-S), to save a file currently being edited
-- File – Save As (Alt-A), to save a file with a new name
-- File – Quit (Alt-Q), to quit the program
-- Edit – Copy, to copy text
-- Edit – Paste, to paste text
+- File â€“ Open (Alt-O), to open a text file
+- File â€“ New (Alt-N), to start a new text file
+- File â€“ Save (Alt-S), to save a file currently being edited
+- File â€“ Save As (Alt-A), to save a file with a new name
+- File â€“ Quit (Alt-Q), to quit the program
+- Edit â€“ Copy, to copy text
+- Edit â€“ Paste, to paste text
 
 For remote FTP logfiles:
 
@@ -20,9 +20,9 @@ For remote FTP logfiles:
   A window will open and prompt you for FTP configuration parameters.
   Specify here hostname, port, username, password, file name, path on the
   server where the log file is stored.
-- File – FTP Save (Alt-V), to save editing window content to the remote
+- File â€“ FTP Save (Alt-V), to save editing window content to the remote
   logfile specified.
-- File – FTP Browse (Alt-B), to browse the FTP server.
+- File â€“ FTP Browse (Alt-B), to browse the FTP server.
 
 Alt-F to open the command menu.
 

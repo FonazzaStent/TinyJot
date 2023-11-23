@@ -479,7 +479,7 @@ def text_modified(event):
 
 def startup():
 	try:
-		filename=str(sys.argv[1])
+		filename=str(" ".join(sys.argv[1:]))
 		global txtfile
 		global txtfilename
 		data=[('Text', '*.txt')]

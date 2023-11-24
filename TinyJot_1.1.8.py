@@ -326,7 +326,7 @@ def open_file():
     txtfilename=askopenfilename(filetypes=data)
     if str(txtfilename)!='':
         textbox.delete(1.0,END)
-        txtfile=open(txtfilename,'rb', encoding="utf-8")
+        txtfile=open(txtfilename,'r', encoding="utf-8")
         text=txtfile.read()
         textbox.insert(INSERT,text)
     filename=os.path.basename(txtfilename).split('/')[-1]
@@ -381,7 +381,7 @@ def ftp_open():
         except:
             tempfile=open("tempfile",'wb')
             tempfile.close()
-            tempfile=open("tempfile",'rb')
+            tempfile=open("tempfile",'r',encoding="utf-8")
             ftp.storbinary("STOR " + filename, tempfile)
             tempfile.close()
         tempfile=open("tempfile",'r')
@@ -486,7 +486,7 @@ def startup():
 		txtfilename=filename
 		if str(txtfilename)!='':
 			textbox.delete(1.0,END)
-			txtfile=open(txtfilename,'rb')
+			txtfile=open(txtfilename,'r',encoding="utf-8")
 			text=txtfile.read()
 			textbox.insert(INSERT,text)
 		filename=os.path.basename(txtfilename).split('/')[-1]

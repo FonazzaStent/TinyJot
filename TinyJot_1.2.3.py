@@ -1,0 +1,673 @@
+"""TinyJot 1.2.3 - An FTP-enabled notepad.
+Copyright (C) 2023  Fonazza-Stent
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>."""
+
+import os
+import sys
+import tkinter as tk
+import tkinter.ttk as ttk
+from tkinter.constants import *
+from tkinter import *
+from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import asksaveasfilename
+import io
+from ftplib import FTP
+import time
+import stat
+from tkinter import messagebox
+
+
+password=''
+FTPerror=False
+configflag='open'
+#read config file
+filename=''
+
+def read_config():
+    global txtfilename
+    global server
+    global port
+    global username
+    global logfile
+    global logdir
+    txtfilename=''
+    parameters=[]
+    if os.path.isfile('config.ini'):
+        configfile=open("config.ini",'r')
+    else:
+        parameterstring='ftp.host.com\n21\nname@email.com'
+        configfile=open("config.ini",'w')
+        configfile.write(parameterstring)
+        configfile.close()
+        configfile=open("config.ini",'r')
+    for n in range (0,5):
+        try:
+            line=configfile.readline()
+            line=line.rstrip('\n')
+        except:
+            line=''
+        parameters.append(line)
+    configfile.close()
+    server=parameters[0]
+    port=parameters[1]
+    username=parameters[2]
+
+#create main window
+def create_main_window():
+        global top
+        global root
+        img=b'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAKhJREFUOE9jZICCioYP/z+/7WCYOrmDMTu34j8+GqS2o0GAEaQVTIAAsiBMDBeN14BpV27+x2dAlo46I9VdgGLjtCs3GbJ01DEcgUscFAb/k0XNGUSzdzLAAgZJN8hweDhhUfsfbABIEcxfyGEAcgnIZhiAugw5DOAGwNQoMTAw3MfnAnS/UeoCsP9QvIBmA0YYIHsXlpAoCYPhkhKpl5kI5UJkeViqBQBbJ7ANHJY4MwAAAABJRU5ErkJggg=='
+        root= tk.Tk()
+        top= root
+        top.geometry("600x450")
+        top.title("TinyJot")
+        favicon=tk.PhotoImage(data=img) 
+        root.wm_iconphoto(True, favicon)
+        root.protocol("WM_DELETE_WINDOW", QuitApp)
+
+#configure
+def configure():
+    global configwin
+    global pw_entry
+    global user_entry
+    global port_entry
+    global host_entry
+    global file_entry
+    global logfile_entry
+    global logdir_entry
+    configwin=tk.Toplevel(top)
+    configwin.geometry("493x180")
+    configwin.resizable(0,0)
+    configwin.title("Configure FTP")
+    host_label=Label(configwin)
+    host_label.place(x=20,y=19,height=19,width=64)
+    host_label.configure(text="Hostname")
+    v = tk.StringVar()
+    v.set(server)
+    host_entry=Entry(configwin,textvariable=v)
+    host_entry.place(x=90,y=19,height=20,width=384)
+    port_label=Label(configwin)
+    port_label.place(x=50,y=47,height=19,width=34)
+    port_label.configure(text="Port")
+    w = tk.StringVar()
+    w.set(port)
+    port_entry=Entry(configwin,textvariable=w)
+    port_entry.place(x=90,y=47,height=20,width=84)    
+    user_label=Label(configwin)
+    user_label.place(x=20,y=75,height=19,width=64)
+    user_label.configure(text="Username")
+    x = tk.StringVar()
+    x.set(username)
+    user_entry=Entry(configwin,textvariable=x)
+    user_entry.place(x=90,y=75,height=20,width=384)
+    #user_entry.bind("<Return>",get_config)
+    pw_label=Label(configwin)
+    pw_label.place(x=25,y=105,height=21,width=54)
+    pw_label.configure(text="Password")
+    j = tk.StringVar()
+    j.set(password)
+    pw_entry=Entry(configwin,show="*",textvariable=j)
+    pw_entry.place(x=90,y=105,height=20,width=384)
+    pw_entry.bind("<Return>",get_config)
+    pw_button=Button(configwin)
+    pw_button.place(x=210,y=140, height=24,width=47)
+    pw_button.configure(text="Save")
+    pw_button.bind("<Button-1>",get_config)
+    cancel_button=Button(configwin)
+    cancel_button.place(x=290,y=140, height=24,width=47)
+    cancel_button.configure(text="Cancel")
+    cancel_button.bind("<Button-1>",config_cancel)
+    pw_entry.focus_set()
+
+def get_config(event):
+    global password
+    global configflag
+    password=pw_entry.get()
+    server=host_entry.get()
+    port=port_entry.get()
+    username=user_entry.get()
+    configfile=open("config.ini",'w')
+    configfile.writelines(server+"\n")
+    configfile.writelines(port+"\n")
+    configfile.writelines(username+"\n")
+    configfile.close()
+    configwin.destroy()
+    read_config()
+
+def config_cancel(event):
+    configwin.destroy()
+
+#Textbox
+def create_textbox():
+        global textbox
+        textbox = Text(top)
+        textbox.place(relx=00, rely=00, relheight=1, relwidth=0.97)
+        scroll_1=Scrollbar (top)
+        scroll_1.pack(side=RIGHT, fill=Y)
+        textbox.configure(yscrollcommand=scroll_1.set,wrap=WORD)
+        scroll_1.configure(command=textbox.yview)
+        textbox.bind("<Key>", text_modified)
+
+#menu
+def create_menu():
+    menubar=tk.Menu(top, tearoff=0)
+    top.configure(menu=menubar)
+    sub_menu=tk.Menu(top, tearoff=0)
+    edit_menu=tk.Menu(top,tearoff=0)
+    menubar.add_cascade(menu=sub_menu,compound="left", label="File")
+    sub_menu.add_command(compound="left",label="New", command=new_file,accelerator="Alt+N")
+    sub_menu.add_command(compound="left",label="Open", command=open_file,accelerator="Alt+O")
+    sub_menu.add_command(compound="left",label="Save", command=Save,accelerator="Alt+S")
+    sub_menu.add_command(compound="left",label="Save as", command=Save_to_file,accelerator="Alt+A")
+    sub_menu.add_command(compound="left",label="FTP Open", command=ftp_open,accelerator="Alt+T")
+    sub_menu.add_command(compound="left",label="FTP Save", command=ftp_save_same_name,accelerator="Alt+W")
+    sub_menu.add_command(compound="left",label="FTP Save as", command=ftp_save,accelerator="Alt+V")
+    sub_menu.add_command(compound="left",label="FTP Configure", command=browse_config,accelerator="Alt+C")
+    sub_menu.add_command(compound="left",label="Quit", command=QuitApp,accelerator="Alt+Q")
+    menubar.add_cascade(menu=edit_menu,compound="left", label="Edit")
+    edit_menu.add_command(compound="left",label="Copy", command=copy_code)
+    edit_menu.add_command(compound="left",label="Paste", command=paste_code)
+    menubar.bind_all("<Alt-f>",menubar.invoke(1))
+    top.bind_all("<Alt-n>",new_hotkey)
+    top.bind_all("<Alt-o>",open_hotkey)
+    top.bind_all("<Alt-s>",save_hotkey)
+    top.bind_all("<Alt-a>",Save_to_file_hotkey)
+    top.bind_all("<Alt-t>",ftp_open_hotkey)
+    top.bind_all("<Alt-v>",ftp_save_same_name_hotkey)
+    top.bind_all("<Alt-v>",ftp_save_hotkey)
+    top.bind_all("<Alt-c>",configure_hotkey)
+    top.bind_all("<Alt-q>",QuitApp_hotkey)
+
+#hotkeys
+def browse_hotkey(event):
+    browse()
+    
+def new_hotkey(event):
+    new_file()
+
+def open_hotkey(event):
+    open_file()
+
+def save_hotkey(event):
+    Save()
+
+def Save_to_file_hotkey(event):
+    Save_to_file()
+
+def ftp_open_hotkey(event):
+    ftp_open()
+
+def ftp_save_hotkey(event):
+    ftp_save()
+
+def ftp_save_same_name_hotkey(event):
+    ftp_save_same_name()
+
+def configure_hotkey(event):
+    configure()
+
+def QuitApp_hotkey(event):
+    QuitApp()
+
+
+
+#FTP
+def ftp_login():
+    global ftp
+    global FTPerror
+    ftp = FTP()
+    try:
+        ftp.connect(server,int(port))
+        ftp.login(username,password)
+        ftp.cwd('/')
+        FTPerror=False
+    except:
+        messagebox.showerror("FTP error", "Could not connect to the FTP server.")
+    textbox.focus_set()
+
+def ftp_browse_login():
+    global ftp
+    global FTPerror
+    ftp = FTP()
+    try:
+        ftp.connect(server,int(port))
+        ftp.login(username,password)
+        ftp.cwd('/')
+        FTPerror=False
+    except:
+        messagebox.showerror("FTP error", "Could not connect to the FTP server.")
+        FTPerror=True
+
+
+#Quit
+def QuitApp():
+    okcancel= messagebox.askokcancel("Quit?","Do you want to quit the app?",default="ok")
+    if okcancel== True:
+        top.destroy()
+
+#Copy Code
+def copy_code():
+    #textbox.tag_add(SEL, "1.0", END)
+    textbox.event_generate(("<<Copy>>"))
+
+#Paste Code
+def paste_code():
+    textbox.event_generate(("<<Paste>>"))
+
+#CopyContextMenu
+def create_context_menu():
+    global menu
+    menu = Menu(root, tearoff = 0)
+    menu.add_command(label="Copy", command=copy_text)
+    menu.add_command(label="Paste", command=paste_text)
+    root.bind("<Button-3>", context_menu)
+
+def context_menu(event): 
+    try: 
+        menu.tk_popup(event.x_root, event.y_root)
+    finally: 
+        menu.grab_release()
+        
+def copy_text():
+        textbox.event_generate(("<<Copy>>"))
+
+def paste_text():
+        textbox.event_generate(("<<Paste>>"))
+
+#New file
+def new_file():
+    global txtfilename
+    txtfilename=''
+    textbox.delete(1.0,END)
+    top.title("TinyJot")
+    textbox.focus_set()
+
+
+#Open file
+def open_file():
+    global txtfile
+    global txtfilename
+    data=[('Text', '*.txt')]
+    txtfilename=askopenfilename(filetypes=data)
+    if str(txtfilename)!='':
+        textbox.delete(1.0,END)
+        txtfile=open(txtfilename,'r')
+
+        text=''
+        eof=False
+        while eof==False:
+           try:
+               char=txtfile.read(1)
+           except:
+               char="?"
+           text=text+char
+           if char=='':
+               eof=True
+
+        #text=txtfile.read()
+        textbox.insert(INSERT,text)
+    filename=os.path.basename(txtfilename).split('/')[-1]
+    top.title("TinyJot - "+filename)
+    textbox.focus_set()
+
+#Save
+def Save():
+    global txtfilename
+    text=textbox.get(1.0,END)
+    if str(txtfilename)!='':
+        txtfilesave=open(txtfilename,'w')
+        txtfilesave.write(text)
+        txtfilesave.close()
+        filename=os.path.basename(txtfilename).split('/')[-1]
+        top.title("TinyJot - "+filename)
+        textbox.focus_set()
+
+
+#Save as
+def Save_to_file():
+    global txtfilename
+    data=[('Text','*.txt')]
+    txtfilename=asksaveasfilename(filetypes=data, defaultextension=data)
+    text=textbox.get(1.0,END)
+    if str(txtfilename)!='':
+          txtfilesave=open(txtfilename,'w')
+          txtfilesave.write(text)
+          txtfilesave.close()
+    filename=os.path.basename(txtfilename).split('/')[-1]
+    top.title("TinyJot - "+filename)
+    textbox.focus_set()
+
+#FTP Open
+
+def ftp_open_config():
+    global configflag
+    configflag='open'
+    configure()
+
+def ftp_open():
+    global FTPerror
+    global timestamp
+    timestamp=time.strftime("%d/%m/%Y %H:%M:%S")
+    browse()
+
+def ftp_open_file(event):
+    global filename
+    try:
+        size=ftp.size(filename)
+     
+        tempfile=open("tempfile",'wb')
+        ftp.retrbinary('RETR %s' % filename, tempfile.write)
+        tempfile.close()
+        tempfile=open("tempfile",'r')
+        top.title("TinyJot - FTP: "+filename)
+        text=''
+        eof=False
+        while eof==False:
+           try:
+               char=tempfile.read(1)
+           except:
+               char="?"
+           text=text+char
+           if char=='':
+               eof=True
+        browsewin.destroy()
+        
+        #text=tempfile.read()
+        tempfile.close()
+        os.remove("tempfile")
+        textbox.delete(1.0,END)
+        textbox.insert(INSERT,text)
+        textbox.insert(INSERT,'\n')
+        textbox.insert(INSERT,timestamp+'\n')
+        
+        textbox.focus_set()
+        ftp.quit()
+        FTPerror=False
+    except:
+        #filenamelen=len(filename)
+        #for n in range (0,filenamelen)
+        if filename!='..':
+            filename=filename[1:-1]
+        ftp.cwd(filename)
+        browsedir()
+
+    
+#FTP Save
+def ftp_save():
+    global FTPerror
+    global timestamp
+    global filename
+    browse_save()
+
+def ftp_save_file_call(event):
+    ftp_save_file()
+
+def ftp_save_file():
+    global filename
+    if filename_entry.get!='':
+        filename=filename_entry.get()
+    if filename!='':
+        text=textbox.get(1.0,END)
+        tempfile=open("tempfile",'w')
+        tempfile.write(text)
+        tempfile.close()
+        tempfile=open("tempfile",'rb')
+        if filename[-4:]=='.txt':
+            ftp.storbinary('STOR '+filename,tempfile)
+        else:
+            ftp.storbinary('STOR '+filename+'.txt',tempfile)
+        tempfile.close()
+        os.remove("tempfile")
+        top.title("TinyJot - FTP: "+filename)
+        textbox.focus_set()
+        ftp.quit()
+        FTPerror=False
+        browsewin.destroy()
+    else:
+        messagebox.showerror("FTP error", "Filename not specified")
+        
+
+def ftp_save_same_name():
+    global filename
+    ftp_browse_login()
+    if filename!='':
+        text=textbox.get(1.0,END)
+        tempfile=open("tempfile",'w')
+        tempfile.write(text)
+        tempfile.close()
+        tempfile=open("tempfile",'rb')
+        if filename[-4:]=='.txt':
+            ftp.storbinary('STOR '+filename,tempfile)
+        else:
+            ftp.storbinary('STOR '+filename+'.txt',tempfile)
+        tempfile.close()
+        os.remove("tempfile")
+        top.title("TinyJot - FTP: "+filename)
+        textbox.focus_set()
+        ftp.quit()
+        FTPerror=False
+
+def ftp_cancel(event):
+    browsewin.destroy()
+
+#FTP Browse
+
+def browse_config():
+    global configflag
+    configflag='browse'
+    configure()
+
+def browse():
+    global browselist
+    global browsewin
+    global FTPerror
+    ftp_browse_login()
+    if FTPerror==False:
+        browsewin=tk.Toplevel(top)
+        browsewin.geometry("530x570")
+        browsewin.resizable(0,0)
+        browsewin.title("Browse FTP")
+        browselist=Listbox(browsewin)
+        browselist.place(x=15,y=15,height=500,width=500)
+        #browsewin.bind("<<ListboxSelect>>",list_select)
+        browsewin.bind('<Double-Button>', chdirs)
+        #browsewin.protocol("WM_DELETE_WINDOW", QuitFTP)
+
+        ok_button=Button(browsewin)
+        ok_button.place(x=20,y=520, height=24,width=40)
+        ok_button.configure(text="Open")
+        ok_button.bind("<Button-1>",ftp_open_file)
+        cancel_button=Button(browsewin)
+        cancel_button.place(x=70,y=520, height=24,width=45)
+        cancel_button.configure(text="Cancel")
+        cancel_button.bind("<Button-1>",ftp_cancel)
+
+        """newfolder_button=Button(browsewin)
+        newfolder_button.place(x=125,y=520, height=24,width=65)
+        newfolder_button.configure(text="New folder")
+        newfolder_button.bind("<Button-1>",new_folder)"""
+
+        deletefile_button=Button(browsewin)
+        deletefile_button.place(x=125,y=520, height=24,width=50)
+        deletefile_button.configure(text="Delete")
+        deletefile_button.bind("<Button-1>",delete_file)
+
+        browsedir()
+    else:
+        True
+
+def browse_save():
+    global browselist
+    global browsewin
+    global FTPerror
+    global filename_entry
+    ftp_browse_login()
+    if FTPerror==False:
+        browsewin=tk.Toplevel(top)
+        browsewin.geometry("530x588")
+        browsewin.resizable(0,0)
+        browsewin.title("Browse FTP")
+        browselist=Listbox(browsewin)
+        browselist.place(x=15,y=15,height=500,width=500)
+        #browsewin.bind("<<ListboxSelect>>",list_select)
+        browsewin.bind('<Double-Button>', chdirs)
+        #browsewin.protocol("WM_DELETE_WINDOW", QuitFTP)
+
+        ok_button=Button(browsewin)
+        ok_button.place(x=20,y=554, height=24,width=40)
+        ok_button.configure(text="Save")
+        ok_button.bind("<Button-1>",ftp_save_file_call)
+        cancel_button=Button(browsewin)
+        cancel_button.place(x=70,y=554, height=24,width=45)
+        cancel_button.configure(text="Cancel")
+        cancel_button.bind("<Button-1>",ftp_cancel)
+        newfolder_button=Button(browsewin)
+        newfolder_button.place(x=125,y=554, height=24,width=65)
+        newfolder_button.configure(text="New folder")
+        newfolder_button.bind("<Button-1>",new_folder)
+
+        deletefile_button=Button(browsewin)
+        deletefile_button.place(x=200,y=554, height=24,width=70)
+        deletefile_button.configure(text="Delete file")
+        deletefile_button.bind("<Button-1>",delete_file)
+        
+        filename_entry=Entry(browsewin)
+        filename_entry.place(x=20,y=520,height=24,width=510)
+        filename_entry.focus_set()
+        browsedir()
+    else:
+        True
+    
+def browsedir():
+    fileyes=False
+    dirlist=[]
+    try:
+        dirlist=ftp.nlst()
+    except:
+        messagebox.showerror("FTP error", "Could not connect to FTP server.")
+    browselist.delete(0,END)
+    browselist.insert(0,'..')
+    for item in dirlist:
+        namelength=len(item)
+        for n in range (0,namelength):
+            if item[n]=='.':
+                fileyes=True
+        if fileyes==False:
+            item='['+str(item)+']'
+        browselist.insert(0,item)
+        fileyes=False
+        
+def chdirs(event):
+    global filename
+    global filename_entry
+    fname=browselist.get(browselist.curselection())
+
+    fnamelength=len(fname)
+    fnametemp=''
+    for n in range (0,fnamelength):
+        if fname[n]!='[' and fname[n]!=']':
+            fnametemp=fnametemp+fname[n]
+    fname=fnametemp
+    curdir= ftp.pwd()
+    filename=fname
+    fname=curdir+'/'+fname
+    
+    try:
+        size=ftp.size(fname)
+        ftp_open_file(event)
+    except:
+        ftp.cwd(fname)
+        browsedir()
+
+def list_select(event):
+    global filename
+    filename=browselist.get(browselist.curselection())
+
+
+def new_folder(event):
+    global filename_entry
+    dirname=filename_entry.get()
+
+    if dirname != "":
+        try:
+            ftp.cwd(dirname)
+        except:
+            #cdTree("/".join(dirname.split("/")[:-1]))
+            ftp.mkd(dirname)
+            browsedir()
+
+def delete_file(event):
+    fname=browselist.get(browselist.curselection())
+    fnamelength=len(fname)
+    fnametemp=''
+    fdir=False
+    for n in range (0,fnamelength):
+        if fname[n]!='[' and fname[n]!=']':
+            fnametemp=fnametemp+fname[n]
+    fname=fnametemp
+    #print (filename)
+    try:
+        size=ftp.size(fname)
+    except:
+        fdir=True
+    if fdir==True:
+        okcancel= messagebox.askokcancel("Delete?","Do you want to delete the folder?",default="ok")
+        if okcancel== True:
+            ftp.rmd(fname)
+    else:
+        okcancel= messagebox.askokcancel("Delete?","Do you want to delete the file?",default="ok")
+        if okcancel== True:
+            ftp.delete(fname)
+    #print (filename)
+    browsedir()
+
+def QuitFTP():
+    ftp.quit()
+
+#text modified
+def text_modified(event):
+    global filename
+    #filename=os.path.basename(txtfilename).split('/')[-1]
+    top.title("TinyJot - "+filename+"*")
+
+def startup():
+	try:
+		filename=str(" ".join(sys.argv[1:]))
+		global txtfile
+		global txtfilename
+		data=[('Text', '*.txt')]
+		txtfilename=filename
+		if str(txtfilename)!='':
+			textbox.delete(1.0,END)
+			txtfile=open(txtfilename,'rb')
+			text=txtfile.read()
+			textbox.insert(INSERT,text)
+		filename=os.path.basename(txtfilename).split('/')[-1]
+		top.title("TinyJot - "+filename)
+		textbox.focus_set()
+	except:
+		True
+
+
+def main():
+        read_config()
+        create_main_window()
+        create_textbox()
+        create_menu()
+        create_context_menu()
+        startup()
+        
+main()
+root.mainloop()
